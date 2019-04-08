@@ -1,0 +1,9 @@
+# Configuration file.
+
+[database]
+user=""
+host=""
+port=5432
+password=""
+name=""
+sslmode="disable"
