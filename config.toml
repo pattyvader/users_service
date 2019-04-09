@@ -1,9 +1,9 @@
 # Configuration file.
 
 [database]
-user=""
-host=""
-port=5432
-password=""
-name=""
+user="users_service"
+host="192.168.0.162"
+port=5434
+password="users_service"
+name="users_service"
 sslmode="disable"

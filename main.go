@@ -1,52 +1,22 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
+	"net/http"
 
-	"github.com/BurntSushi/toml"
+	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"github.com/pattyvader/users_service/handlers"
 )
 
-var db *sql.DB
-
-type configFile struct {
-	DB database `toml:"database"`
-}
-
-type database struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	Name     string
-	SSLmode  string
-}
-
 func main() {
-	initDB()
-	defer db.Close()
-}
-
-func initDB() {
-	var conf configFile
-	var err error
-
-	if _, err = toml.DecodeFile("config.toml", &conf); err != nil {
-		log.Println(err)
-		return
+	r := mux.NewRouter()
+	r.HandleFunc("/v1/users", handlers.GetAllUsersHandler).Methods("GET")
+	r.HandleFunc("/v1/users/{id}", handlers.FindUserHandler).Methods("GET")
+	r.HandleFunc("/v1/users", handlers.CreateUserHandler).Methods("POST")
+	r.HandleFunc("/v1/users", handlers.UpdateUserHandler).Methods("PUT")
+	r.HandleFunc("/v1/users", handlers.DeleteUserHandler).Methods("DELETE")
+	if err := http.ListenAndServe(":8001", r); err != nil {
+		log.Fatal(err)
 	}
-
-	dbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", conf.DB.Host, conf.DB.Port, conf.DB.User, conf.DB.Password, conf.DB.Name, conf.DB.SSLmode)
-	db, err = sql.Open("postgres", dbInfo)
-	if err != nil {
-		panic(err)
-	}
-
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("host: %s, port: %d, user: %s, name: %s", conf.DB.Host, conf.DB.Port, conf.DB.User, conf.DB.Name)
 }
