@@ -23,6 +23,7 @@ type database struct {
 	SSLmode  string
 }
 
+//InitDB reads a TOML file and creates a database connection
 func InitDB() {
 	var conf configFile
 	var err error
@@ -32,7 +33,8 @@ func InitDB() {
 		return
 	}
 
-	dbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", conf.DB.Host, conf.DB.Port, conf.DB.User, conf.DB.Password, conf.DB.Name, conf.DB.SSLmode)
+	dbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		conf.DB.Host, conf.DB.Port, conf.DB.User, conf.DB.Password, conf.DB.Name, conf.DB.SSLmode)
 	db, err = sql.Open("postgres", dbInfo)
 	if err != nil {
 		panic(err)
@@ -42,9 +44,11 @@ func InitDB() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("host: %s, port: %d, user: %s, name: %s", conf.DB.Host, conf.DB.Port, conf.DB.User, conf.DB.Name)
+	log.Printf("host: %s, port: %d, user: %s, name: %s",
+		conf.DB.Host, conf.DB.Port, conf.DB.User, conf.DB.Name)
 }
 
+//CloseDB close the database connection
 func CloseDB() {
 	db.Close()
 }
