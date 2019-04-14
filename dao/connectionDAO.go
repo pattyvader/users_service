@@ -23,7 +23,7 @@ type database struct {
 	SSLmode  string
 }
 
-//InitDB lê um arquivo do tipo toml e efetua a conexao com o banco de dados
+//InitDB reads a TOML file and creates a database connection
 func InitDB() {
 	var conf configFile
 	var err error
@@ -48,7 +48,7 @@ func InitDB() {
 		conf.DB.Host, conf.DB.Port, conf.DB.User, conf.DB.Name)
 }
 
-//CloseDB fecha a conexao com o banco de dados
+//CloseDB close the database connection
 func CloseDB() {
 	db.Close()
 }

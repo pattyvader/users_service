@@ -1,12 +1,10 @@
 package dao
 
 import (
-	"log"
-
 	"github.com/pattyvader/users_service/models"
 )
 
-//GetAllUsers retorna todos os usuários que estao cadastrados no banco de dados
+//GetAllUsers retrives all users
 func GetAllUsers() ([]models.User, error) {
 	InitDB()
 	defer CloseDB()
@@ -15,33 +13,29 @@ func GetAllUsers() ([]models.User, error) {
 
 	rows, err := db.Query(`SELECT id, name, email, admin FROM users order by id`)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 	defer rows.Close()
 
-	if err == nil {
-		for rows.Next() {
-			var ID int
-			var Name string
-			var Email string
-			var Admin bool
+	for rows.Next() {
+		var ID int
+		var Name string
+		var Email string
+		var Admin bool
 
-			err = rows.Scan(&ID, &Name, &Email, &Admin)
-			if err == nil {
-				currentUser := models.User{ID: ID, Name: Name, Email: Email, Admin: Admin}
-				users = append(users, currentUser)
-			} else {
-				return users, err
-			}
+		err = rows.Scan(&ID, &Name, &Email, &Admin)
+		if err == nil {
+			currentUser := models.User{ID: ID, Name: Name, Email: Email, Admin: Admin}
+			users = append(users, currentUser)
+		} else {
+			return nil, err
 		}
-	} else {
-		return users, err
 	}
 	return users, err
 }
 
-//GetUserByID retorna somente 1 usuário cadastrado no banco
-func GetUserByID(userID string) (models.User, error) {
+//GetUserByID retrieves only one user
+func GetUserByID(userID int) (*models.User, error) {
 	InitDB()
 	defer CloseDB()
 
@@ -53,16 +47,18 @@ func GetUserByID(userID string) (models.User, error) {
 	var Password string
 	var Admin bool
 
-	err := db.QueryRow(`SELECT id, name, email, password, admin FROM users where id = $1`, userID).Scan(&ID, &Name, &Email, &Password, &Admin)
+	err := db.QueryRow(`SELECT id, name, email, password, admin FROM users where id = $1`,
+		userID).Scan(&ID, &Name, &Email, &Password, &Admin)
 	if err == nil {
 		user = models.User{ID: ID, Name: Name, Email: Email, Password: Password, Admin: Admin}
+	} else {
+		return nil, err
 	}
-	return user, err
-
+	return &user, err
 }
 
-// CreateUser cria um novo usuário no banco de dados
-func CreateUser(user models.User) (models.User, error) {
+// CreateUser creates a new user
+func CreateUser(user models.User) (*models.User, error) {
 	InitDB()
 	defer CloseDB()
 
@@ -71,47 +67,47 @@ func CreateUser(user models.User) (models.User, error) {
 	err := db.QueryRow(`INSERT INTO users(name, email, password, admin) VALUES($1, $2, $3, $4) RETURNING id`,
 		user.Name, user.Email, user.Password, user.Admin).Scan(&userID)
 	if err != nil {
-		return user, err
+		return nil, err
 	}
 
 	user.ID = userID
-	return user, err
+	return &user, err
 }
 
-//UpdateUser atualiza um usuário
-func UpdateUser(user models.User, userID string) (int, error) {
+//UpdateUser update an user
+func UpdateUser(user models.User, userID int) (models.User, int, error) {
 	InitDB()
 	defer CloseDB()
 
-	response, err := db.Exec(`UPDATE users set name=$1, email=$2, password=$3, admin=$4 where id=$5 RETURNING id`,
+	result, err := db.Exec(`UPDATE users set name=$1, email=$2, password=$3, admin=$4 where id=$5 RETURNING id`,
 		user.Name, user.Email, user.Password, user.Admin, userID)
 	if err != nil {
-		log.Println(err)
-		return 0, err
+		return user, 0, err
 	}
 
-	rowsUpdated, err := response.RowsAffected()
+	rowsUpdated, err := result.RowsAffected()
 	if err != nil {
-		return 0, err
+		return user, 0, err
 	}
 
-	return int(rowsUpdated), err
+	user.ID = userID
+	return user, int(rowsUpdated), err
 }
 
-//RemoveUser remove um usuário
-func RemoveUser(userID string) (int, error) {
+//RemoveUser remove an user
+func RemoveUser(userID int) (int, error) {
 	InitDB()
 	defer CloseDB()
 
-	response, err := db.Exec(`DELETE FROM users where id = $1`, userID)
+	result, err := db.Exec(`DELETE FROM users where id = $1`, userID)
 	if err != nil {
 		return 0, err
 	}
 
-	rowsDeleted, err := response.RowsAffected()
+	rowsDeleted, err := result.RowsAffected()
 	if err != nil {
 		return 0, err
 	}
 
-	return int(rowsDeleted), nil
+	return int(rowsDeleted), err
 }

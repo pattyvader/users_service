@@ -2,84 +2,113 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/pattyvader/users_service/dao"
 	"github.com/pattyvader/users_service/models"
 )
 
-//GetAllUsersHandler retorna em formato json todos os usuários cadastrados no banco de dados
+//GetAllUsersHandler retrives all users
 func GetAllUsersHandler(w http.ResponseWriter, r *http.Request) {
 	users, err := dao.GetAllUsers()
 	if err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
-	response := users
-	encoder := json.NewEncoder(w)
-	encoder.Encode(response)
+	FormatResponseToJSON(w, http.StatusOK, users)
 }
 
-//GetUserByIDHandler retorna em formato json um usuário
+//GetUserByIDHandler retrieves only one user
 func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
 	param := mux.Vars(r)
-	userID := param["id"]
+	paramID := param["id"]
+
+	userID, err := strconv.Atoi(paramID)
+	if err != nil {
+		log.Println(err)
+	}
 
 	user, err := dao.GetUserByID(userID)
 	if err != nil {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
-	response := user
-	encoder := json.NewEncoder(w)
-	encoder.Encode(response)
+	FormatResponseToJSON(w, http.StatusOK, user)
 }
 
-//CreateUserHandler cria um novo usuário
+//CreateUserHandler creates a new user
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 
-	userCreate, err := dao.CreateUser(user)
+	newUser, err := dao.CreateUser(user)
 	if err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	response := userCreate
-	encoder := json.NewEncoder(w)
-	encoder.Encode(response)
+	FormatResponseToJSON(w, http.StatusCreated, newUser)
 }
 
-//UpdateUserHandler atualiza um usuário
+//UpdateUserHandler updates an user
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	param := mux.Vars(r)
-	userID := param["id"]
+	paramID := param["id"]
 
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 
-	userUpdate, err := dao.UpdateUser(user, userID)
+	userID, err := strconv.Atoi(paramID)
+	if err != nil {
+		log.Println(err)
+	}
+
+	updateUser, code, err := dao.UpdateUser(user, userID)
 	if err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	response := userUpdate
-	encoder := json.NewEncoder(w)
-	encoder.Encode(response)
+
+	if code == 0 {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	FormatResponseToJSON(w, http.StatusOK, updateUser)
 }
 
-// DeleteUserHandler remove um usuário
+// DeleteUserHandler removes an user
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	param := mux.Vars(r)
-	userID := param["id"]
+	paramID := param["id"]
 
-	user, err := dao.RemoveUser(userID)
+	userID, err := strconv.Atoi(paramID)
+	if err != nil {
+		log.Println(err)
+	}
+
+	result, err := dao.RemoveUser(userID)
 	if err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	response := user
-	encoder := json.NewEncoder(w)
-	encoder.Encode(response)
+
+	if result == 0 {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	FormatResponseToJSON(w, http.StatusAccepted, "Accepted")
+}
+
+//FormatResponseToJSON format the response to json
+func FormatResponseToJSON(w http.ResponseWriter, statusCode int, response interface{}) {
+	json, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	w.Write(json)
 }
