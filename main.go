@@ -6,10 +6,14 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"github.com/pattyvader/users_service/dao"
 	"github.com/pattyvader/users_service/handlers"
 )
 
 func main() {
+	dao.InitDB()
+	defer dao.CloseDB()
+
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/users/", handlers.GetAllUsersHandler).Methods("GET")
 	r.HandleFunc("/v1/users/{id}", handlers.GetUserByIDHandler).Methods("GET")

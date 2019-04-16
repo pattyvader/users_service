@@ -6,9 +6,6 @@ import (
 
 //GetAllUsers retrives all users
 func GetAllUsers() ([]models.User, error) {
-	InitDB()
-	defer CloseDB()
-
 	users := []models.User{}
 
 	rows, err := db.Query(`SELECT id, name, email, admin FROM users order by id`)
@@ -36,9 +33,6 @@ func GetAllUsers() ([]models.User, error) {
 
 //GetUserByID retrieves only one user
 func GetUserByID(userID int) (*models.User, error) {
-	InitDB()
-	defer CloseDB()
-
 	user := models.User{}
 
 	var ID int
@@ -59,9 +53,6 @@ func GetUserByID(userID int) (*models.User, error) {
 
 // CreateUser creates a new user
 func CreateUser(user models.User) (*models.User, error) {
-	InitDB()
-	defer CloseDB()
-
 	var userID int
 
 	err := db.QueryRow(`INSERT INTO users(name, email, password, admin) VALUES($1, $2, $3, $4) RETURNING id`,
@@ -76,9 +67,6 @@ func CreateUser(user models.User) (*models.User, error) {
 
 //UpdateUser update an user
 func UpdateUser(user models.User, userID int) (models.User, int, error) {
-	InitDB()
-	defer CloseDB()
-
 	result, err := db.Exec(`UPDATE users set name=$1, email=$2, password=$3, admin=$4 where id=$5 RETURNING id`,
 		user.Name, user.Email, user.Password, user.Admin, userID)
 	if err != nil {
@@ -96,9 +84,6 @@ func UpdateUser(user models.User, userID int) (models.User, int, error) {
 
 //RemoveUser remove an user
 func RemoveUser(userID int) (int, error) {
-	InitDB()
-	defer CloseDB()
-
 	result, err := db.Exec(`DELETE FROM users where id = $1`, userID)
 	if err != nil {
 		return 0, err
