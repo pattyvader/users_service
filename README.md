@@ -12,4 +12,4 @@ go get github.com/pattyvader/users_service
 
 * [Gorilla](https://github.com/gorilla/mux)
 * [TOML parser for Golang](https://github.com/gorilla/mux)
-* [PostgreSQL](ttps://www.postgresql.org/)
+* [PostgreSQL](https://www.postgresql.org/)
