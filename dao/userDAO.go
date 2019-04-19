@@ -1,6 +1,8 @@
 package dao
 
 import (
+	"log"
+
 	"github.com/pattyvader/users_service/models"
 )
 
@@ -8,7 +10,7 @@ import (
 func GetAllUsers() ([]models.User, error) {
 	users := []models.User{}
 
-	rows, err := db.Query(`SELECT id, name, email, admin FROM users order by id`)
+	rows, err := db.Query(`SELECT id, name, email, password, admin FROM users order by id`)
 	if err != nil {
 		return nil, err
 	}
@@ -18,13 +20,16 @@ func GetAllUsers() ([]models.User, error) {
 		var ID int
 		var Name string
 		var Email string
+		var Password string
 		var Admin bool
 
-		err = rows.Scan(&ID, &Name, &Email, &Admin)
+		err = rows.Scan(&ID, &Name, &Email, &Password, &Admin)
 		if err == nil {
-			currentUser := models.User{ID: ID, Name: Name, Email: Email, Admin: Admin}
+			currentUser := models.User{ID: ID, Name: Name, Email: Email,
+				Password: Password, Admin: Admin}
 			users = append(users, currentUser)
 		} else {
+			log.Println(err)
 			return nil, err
 		}
 	}
